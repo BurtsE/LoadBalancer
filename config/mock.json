@@ -1,0 +1,10 @@
+[
+  {
+    "httpRequest": {
+      "path": "/ping"
+    },
+    "httpResponse": {
+      "body": "pong"
+    }
+  }
+]

@@ -1,0 +1,63 @@
+services:
+  database:
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_DB=load_balancer
+    image: postgres
+    restart: always
+    shm_size: 2gb
+    volumes:
+      - ../internal/migrations/tables.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d load_balancer"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+  mockServer_1:
+    image: mockserver/mockserver:5.14.0
+    command: -logLevel DEBUG -serverPort 1090
+    ports:
+      - 1080:1090
+    volumes:
+      - type: bind
+        source: ../config
+        target: /config
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mock.json
+    networks:
+      - internal
+  mockServer_2:
+    image: mockserver/mockserver:5.14.0
+    command: -logLevel DEBUG -serverPort 1090
+    ports:
+      - 1081:1090
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mock.json
+    volumes:
+      - type: bind
+        source: ../config
+        target: /config
+    networks:
+      - internal
+  server:
+    environment:
+      - DATABASE_HOST=database
+    depends_on:
+      database:
+        condition: service_healthy
+    build:
+      context:    ../
+      dockerfile: ./deploy/Dockerfile
+    restart: always
+
+    ports:
+      - "8080:8080"
+    networks:
+      - internal
+
+networks:
+  internal:

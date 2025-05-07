@@ -1,0 +1,16 @@
+port: 8080
+backends:
+  - http://mockServer_1:1090
+  - http://mockServer_2:1090
+  - http://mockServer_3:1090
+
+rate_limit:
+  default_capacity: 100     # Макс. токенов
+  default_refill_rate: 1   # Таймер пополнения токенов
+
+postgres:
+  host: database
+  port: 5432
+  username: admin
+  password: 123
+  database: load_balancer

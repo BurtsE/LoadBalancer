@@ -1,0 +1,6 @@
+CREATE TABLE config (
+    id SERIAL NOT NULL PRIMARY KEY,
+    ip VARCHAR(32) NOT NULL,
+    capacity INTEGER NOT NULL,
+    refill_rate INTEGER NOT NULL
+)
