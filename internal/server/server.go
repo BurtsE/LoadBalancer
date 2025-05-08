@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type errorResponce struct {
+type errorResponse struct {
 	Error string `json:"message"`
 	Code  int    `json:"code"`
 }
@@ -101,7 +101,7 @@ func modifyResponse(res *http.Response) error {
 
 func writeErrorResponse(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(errorResponce{
+	json.NewEncoder(w).Encode(errorResponse{
 		Error: err.Error(),
 		Code:  code,
 	})

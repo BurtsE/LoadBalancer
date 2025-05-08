@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"LoadBalancer/domain"
 	"LoadBalancer/internal/config"
+	"LoadBalancer/internal/domain"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
