@@ -12,31 +12,31 @@ Server Port:            8080
 Document Path:          /ping
 Document Length:        4 bytes
 
-Concurrency Level:      10
-Time taken for tests:   12.114 seconds
+Concurrency Level:      1000
+Time taken for tests:   4.341 seconds
 Complete requests:      5000
 Failed requests:        0
 Total transferred:      715000 bytes
 HTML transferred:       20000 bytes
-Requests per second:    412.74 [#/sec] (mean)
-Time per request:       24.229 [ms] (mean)
-Time per request:       2.423 [ms] (mean, across all concurrent requests)
-Transfer rate:          57.64 [Kbytes/sec] received
+Requests per second:    1151.93 [#/sec] (mean)
+Time per request:       868.111 [ms] (mean)
+Time per request:       0.868 [ms] (mean, across all concurrent requests)
+Transfer rate:          160.86 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.6      0      13
-Processing:     1   24  17.9     20     208
-Waiting:        1   24  17.7     19     208
-Total:          2   24  17.9     20     208
+Connect:        0   10  17.4      1      73
+Processing:    28  787 315.6    754    2301
+Waiting:       17  776 315.7    745    2300
+Total:         91  797 310.9    771    2301
 
 Percentage of the requests served within a certain time (ms)
-  50%     20
-  66%     26
-  75%     32
-  80%     35
-  90%     46
-  95%     58
-  98%     73
-  99%     84
- 100%    208 (longest request)
+  50%    771
+  66%    877
+  75%    961
+  80%   1014
+  90%   1204
+  95%   1397
+  98%   1560
+  99%   1708
+ 100%   2301 (longest request)
