@@ -29,3 +29,4 @@
 * Логирование
 * Здоровье бэкендов (Health Checks)
 * Graceful Shutdown
+* Стресс тесты (В катологе stress_tests)
