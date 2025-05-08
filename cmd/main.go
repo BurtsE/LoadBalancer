@@ -32,8 +32,8 @@ func main() {
 	if err != nil {
 		log.Printf("could not load custom config: %v\n", err)
 	}
-	for client, values := range clients {
-		limiter.SetCustomLimit(client, values[0], values[1])
+	for _, client := range clients {
+		limiter.SetCustomLimit(client.ID, client.Capacity, client.RefillRate)
 	}
 	srv := server.NewServer(cfg, balancer, limiter)
 

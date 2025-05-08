@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"LoadBalancer/domain"
 	"LoadBalancer/internal/config"
 	"context"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 )
 
 // Clients - структура для хранения емкости и скорости пополнения
-type Clients map[string][2]int
 
 type PostgresRepo struct {
 	conn *pgxpool.Pool
@@ -36,21 +36,17 @@ func (p *PostgresRepo) Close() {
 }
 
 // Получениение кастомных конфигураций клиентов
-func (p *PostgresRepo) GetConfig(ctx context.Context) (Clients, error) {
+func (p *PostgresRepo) GetConfig(ctx context.Context) ([]domain.Client, error) {
 	query := `SELECT ip, capacity, refill_rate FROM config`
-	var (
-		ip                   string
-		capacity, refillRate int
-	)
-	cfg := make(Clients)
-
+	clients := make([]domain.Client, 0)
+	c := domain.Client{}
 	rows, _ := p.conn.Query(ctx, query)
-	_, err := pgx.ForEachRow(rows, []any{&ip, &capacity, &refillRate}, func() error {
-		cfg[ip] = [2]int{capacity, refillRate}
+	_, err := pgx.ForEachRow(rows, []any{&c.ID, &c.Capacity, &c.RefillRate}, func() error {
+		clients = append(clients, c)
 		return nil
 	})
 	if err != nil {
-		return cfg, fmt.Errorf("failed to get config : %w", err)
+		return clients, fmt.Errorf("failed to get config : %w", err)
 	}
-	return cfg, nil
+	return clients, nil
 }
