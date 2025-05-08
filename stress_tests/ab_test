@@ -10,34 +10,33 @@ Server Hostname:        localhost
 Server Port:            8080
 
 Document Path:          /ping
-Document Length:        58 bytes
+Document Length:        4 bytes
 
-Concurrency Level:      1000
-Time taken for tests:   0.946 seconds
+Concurrency Level:      10
+Time taken for tests:   12.114 seconds
 Complete requests:      5000
 Failed requests:        0
-Non-2xx responses:      5000
-Total transferred:      960000 bytes
-HTML transferred:       290000 bytes
-Requests per second:    5284.81 [#/sec] (mean)
-Time per request:       189.221 [ms] (mean)
-Time per request:       0.189 [ms] (mean, across all concurrent requests)
-Transfer rate:          990.90 [Kbytes/sec] received
+Total transferred:      715000 bytes
+HTML transferred:       20000 bytes
+Requests per second:    412.74 [#/sec] (mean)
+Time per request:       24.229 [ms] (mean)
+Time per request:       2.423 [ms] (mean, across all concurrent requests)
+Transfer rate:          57.64 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0   25  17.6     21      73
-Processing:    19  146  68.4    132     402
-Waiting:        3  134  66.8    122     382
-Total:         31  171  61.2    157     441
+Connect:        0    0   0.6      0      13
+Processing:     1   24  17.9     20     208
+Waiting:        1   24  17.7     19     208
+Total:          2   24  17.9     20     208
 
 Percentage of the requests served within a certain time (ms)
-  50%    157
-  66%    178
-  75%    207
-  80%    234
-  90%    270
-  95%    289
-  98%    307
-  99%    313
- 100%    441 (longest request)
+  50%     20
+  66%     26
+  75%     32
+  80%     35
+  90%     46
+  95%     58
+  98%     73
+  99%     84
+ 100%    208 (longest request)
