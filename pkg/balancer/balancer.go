@@ -100,7 +100,7 @@ func (b *Balancer) checkBackend(backend *backendStatus) {
 	defer cancel()
 
 	URL := backend.url.String() + healthCheckPath
-	req, err := http.NewRequestWithContext(ctx, "GET", backend.url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		b.markBackend(backend, false)
 		return
@@ -113,7 +113,6 @@ func (b *Balancer) checkBackend(backend *backendStatus) {
 		return
 	}
 	defer resp.Body.Close()
-
 	b.markBackend(backend, resp.StatusCode == 200)
 }
 

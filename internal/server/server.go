@@ -79,6 +79,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 func (s *Server) director(req *http.Request) {
 	backend := s.balancer.GetNextURL()
 	if backend == nil {
+		log.Println("no backend available")
 		return
 	}
 	log.Printf("Forwarding request to %s | %s %s", backend.Host, req.Method, req.URL.Path)
