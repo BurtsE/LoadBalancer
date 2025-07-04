@@ -25,7 +25,7 @@ func main() {
 	}()
 
 	cfg := config.LoadConfig("config/config.yaml")
-	balancer := balancer.NewBalancer(ctx, cfg)
+	loadBbalancer := balancer.NewBalancer(ctx, cfg)
 	limiter := rate_limiter.NewRateLimiter(cfg.Capacity, cfg.RefillRate)
 	db := storage.NewPostgresRepo(ctx, cfg)
 	clients, err := db.GetConfig(ctx)
@@ -35,7 +35,7 @@ func main() {
 	for _, client := range clients {
 		limiter.SetCustomLimit(client.ID, client.Capacity, client.RefillRate)
 	}
-	srv := server.NewServer(cfg, balancer, limiter)
+	srv := server.NewServer(cfg, loadBbalancer, limiter)
 
 	errG, gCtx := errgroup.WithContext(ctx)
 
