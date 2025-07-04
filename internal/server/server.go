@@ -35,7 +35,6 @@ type Server struct {
 
 func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limiter) *Server {
 	s := &Server{
-
 		balancer: balancer,
 		limiter:  limiter,
 	}
