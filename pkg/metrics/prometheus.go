@@ -22,5 +22,6 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 			[]string{"backend"}),
 	}
 	reg.MustRegister(m.Requests)
+	reg.MustRegister(m.Duration)
 	return m
 }
