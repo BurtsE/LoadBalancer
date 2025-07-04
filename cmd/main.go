@@ -35,6 +35,7 @@ func main() {
 	for _, client := range clients {
 		limiter.SetCustomLimit(client.ID, client.Capacity, client.RefillRate)
 	}
+
 	srv := server.NewServer(cfg, loadBbalancer, limiter)
 
 	errG, gCtx := errgroup.WithContext(ctx)

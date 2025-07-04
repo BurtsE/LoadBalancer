@@ -3,9 +3,12 @@ package server
 import (
 	"LoadBalancer/internal/config"
 	"LoadBalancer/pkg/balancer"
+	"LoadBalancer/pkg/metrics"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -31,6 +34,7 @@ type Server struct {
 	proxy    *httputil.ReverseProxy
 	balancer Balancer
 	limiter  Limiter
+	metrics  *metrics.Metrics
 }
 
 func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limiter) *Server {
@@ -45,8 +49,14 @@ func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limite
 	}
 	server := &http.Server{
 		Addr:    ":" + config.ServerPort,
-		Handler: http.HandlerFunc(s.handleRequest),
+		Handler: http.DefaultServeMux,
 	}
+	reg := prometheus.NewRegistry()
+	m := metrics.NewMetrics(reg)
+	s.metrics = m
+
+	http.Handle("/metrics/", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	http.Handle("/", http.HandlerFunc(s.handleRequest))
 	s.srv = server
 	s.proxy = proxy
 	return s
@@ -63,7 +73,7 @@ func (s *Server) Stop(ctx context.Context) error {
 // Обработчик запросов
 func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-
+	s.metrics.Requests.WithLabelValues(r.Method, r.RequestURI).Inc()
 	clientIP := r.RemoteAddr
 	if !s.limiter.Allow(clientIP) {
 		writeErrorResponse(w, fmt.Errorf("rate limit exceeded"), http.StatusTooManyRequests)
@@ -71,7 +81,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.proxy.ServeHTTP(w, r)
-	log.Printf("Request completed in %v", time.Since(start))
+	s.metrics.Duration.WithLabelValues(r.RemoteAddr).Observe(time.Since(start).Seconds())
 }
 
 // Настройка прокси
