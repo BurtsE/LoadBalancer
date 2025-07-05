@@ -3,9 +3,12 @@ package server
 import (
 	"LoadBalancer/internal/config"
 	"LoadBalancer/pkg/balancer"
+	"LoadBalancer/pkg/metrics"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -31,11 +34,11 @@ type Server struct {
 	proxy    *httputil.ReverseProxy
 	balancer Balancer
 	limiter  Limiter
+	metrics  *metrics.Metrics
 }
 
 func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limiter) *Server {
 	s := &Server{
-
 		balancer: balancer,
 		limiter:  limiter,
 	}
@@ -46,8 +49,15 @@ func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limite
 	}
 	server := &http.Server{
 		Addr:    ":" + config.ServerPort,
-		Handler: http.HandlerFunc(s.handleRequest),
+		Handler: http.DefaultServeMux,
 	}
+	reg := prometheus.NewRegistry()
+	m := metrics.NewMetrics(reg)
+	s.metrics = m
+
+	http.Handle("/metrics/", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	http.Handle("/ping/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("pong")) }))
+	http.Handle("/", http.HandlerFunc(s.handleRequest))
 	s.srv = server
 	s.proxy = proxy
 	return s
@@ -63,16 +73,20 @@ func (s *Server) Stop(ctx context.Context) error {
 
 // Обработчик запросов
 func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
+	defer s.writeMetric(r, time.Now())
 
 	clientIP := r.RemoteAddr
 	if !s.limiter.Allow(clientIP) {
 		writeErrorResponse(w, fmt.Errorf("rate limit exceeded"), http.StatusTooManyRequests)
 		return
 	}
-
 	s.proxy.ServeHTTP(w, r)
-	log.Printf("Request completed in %v", time.Since(start))
+}
+
+func (s *Server) writeMetric(r *http.Request, start time.Time) {
+	s.metrics.Requests.WithLabelValues(r.Method, r.RequestURI).Inc()
+	s.metrics.Duration.WithLabelValues().Observe(time.Since(start).Seconds())
+
 }
 
 // Настройка прокси
@@ -82,10 +96,14 @@ func (s *Server) director(req *http.Request) {
 		log.Println("no backend available")
 		return
 	}
+
 	log.Printf("Forwarding request to %s | %s %s", backend.Host, req.Method, req.URL.Path)
 	req.URL.Scheme = backend.Scheme
 	req.URL.Host = backend.Host
 	req.Header.Set("X-Forwarded-For", req.RemoteAddr)
+
+	ctx := context.WithValue(req.Context(), "targetUrl", backend.Host)
+	*req = *req.WithContext(ctx)
 }
 
 // Обработка ошибок бэкенда
