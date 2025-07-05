@@ -25,9 +25,13 @@ func main() {
 	}()
 
 	cfg := config.LoadConfig("config/config.yaml")
-	loadBbalancer := balancer.NewBalancer(ctx, cfg)
+	loadBalancer := balancer.NewBalancer(ctx, cfg)
 	limiter := rate_limiter.NewRateLimiter(cfg.Capacity, cfg.RefillRate)
-	db := storage.NewPostgresRepo(ctx, cfg)
+	db, err := storage.NewPostgresRepo(ctx, cfg)
+	if err != nil {
+		log.Printf("could not connect to postgres: %v", err)
+	}
+
 	clients, err := db.GetConfig(ctx)
 	if err != nil {
 		log.Printf("could not load custom config: %v\n", err)
@@ -36,7 +40,7 @@ func main() {
 		limiter.SetCustomLimit(client.ID, client.Capacity, client.RefillRate)
 	}
 
-	srv := server.NewServer(cfg, loadBbalancer, limiter)
+	srv := server.NewServer(cfg, loadBalancer, limiter)
 
 	errG, gCtx := errgroup.WithContext(ctx)
 
@@ -59,7 +63,9 @@ func main() {
 	errG.Go(func() error {
 		<-gCtx.Done()
 		log.Println("closing database...")
-		db.Close()
+		if db != nil {
+			db.Close()
+		}
 		return nil
 	})
 	if err = errG.Wait(); err != nil {

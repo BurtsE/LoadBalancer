@@ -56,6 +56,7 @@ func NewServer(config config.Config, balancer *balancer.Balancer, limiter Limite
 	s.metrics = m
 
 	http.Handle("/metrics/", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	http.Handle("/ping/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("pong")) }))
 	http.Handle("/", http.HandlerFunc(s.handleRequest))
 	s.srv = server
 	s.proxy = proxy
@@ -72,16 +73,20 @@ func (s *Server) Stop(ctx context.Context) error {
 
 // Обработчик запросов
 func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-	s.metrics.Requests.WithLabelValues(r.Method, r.RequestURI).Inc()
+	defer s.writeMetric(r, time.Now())
+
 	clientIP := r.RemoteAddr
 	if !s.limiter.Allow(clientIP) {
 		writeErrorResponse(w, fmt.Errorf("rate limit exceeded"), http.StatusTooManyRequests)
 		return
 	}
-
 	s.proxy.ServeHTTP(w, r)
-	s.metrics.Duration.WithLabelValues(r.RemoteAddr).Observe(time.Since(start).Seconds())
+}
+
+func (s *Server) writeMetric(r *http.Request, start time.Time) {
+	s.metrics.Requests.WithLabelValues(r.Method, r.RequestURI).Inc()
+	s.metrics.Duration.WithLabelValues().Observe(time.Since(start).Seconds())
+
 }
 
 // Настройка прокси
@@ -91,10 +96,14 @@ func (s *Server) director(req *http.Request) {
 		log.Println("no backend available")
 		return
 	}
+
 	log.Printf("Forwarding request to %s | %s %s", backend.Host, req.Method, req.URL.Path)
 	req.URL.Scheme = backend.Scheme
 	req.URL.Host = backend.Host
 	req.Header.Set("X-Forwarded-For", req.RemoteAddr)
+
+	ctx := context.WithValue(req.Context(), "targetUrl", backend.Host)
+	*req = *req.WithContext(ctx)
 }
 
 // Обработка ошибок бэкенда

@@ -1,6 +1,8 @@
 package metrics
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 type Metrics struct {
 	Requests *prometheus.CounterVec
@@ -19,7 +21,7 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 				Name:    "request_duration_seconds",
 				Buckets: []float64{0.05, 0.1, 0.5, 1, 2.5},
 			},
-			[]string{"backend"}),
+			[]string{}),
 	}
 	reg.MustRegister(m.Requests)
 	reg.MustRegister(m.Duration)

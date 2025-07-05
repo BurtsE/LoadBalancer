@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
 )
 
 // Clients - структура для хранения емкости и скорости пополнения
@@ -16,19 +15,19 @@ type PostgresRepo struct {
 	conn *pgxpool.Pool
 }
 
-func NewPostgresRepo(ctx context.Context, cfg config.Config) *PostgresRepo {
+func NewPostgresRepo(ctx context.Context, cfg config.Config) (*PostgresRepo, error) {
 	DSN := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Username, cfg.Password, cfg.Database)
 	conn, err := pgxpool.New(ctx, DSN)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if err = conn.Ping(ctx); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return &PostgresRepo{
 		conn: conn,
-	}
+	}, nil
 }
 
 func (p *PostgresRepo) Close() {
